@@ -11,6 +11,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "dotenv": "^17.3.1"
+    "@google/generative-ai": "^0.24.1",
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^7.0.0-rc.9",
+    "cloudinary": "^2.9.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "qrcode": "^1.5.4",
+    "uuid": "^13.0.0",
+    "winston": "^3.19.0"
   }
 }
