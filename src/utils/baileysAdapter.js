@@ -4,240 +4,165 @@ import makeWASocket, {
   fetchLatestBaileysVersion
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
-import { v2 as cloudinary } from 'cloudinary';
+import axios from 'axios';
 import path from 'path';
-import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { logger } from './logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const AUTH_FOLDER = path.join(process.cwd(), 'auth_info_baileys');
-const CLOUDINARY_AUTH_KEY = 'norlei-salgados/auth_session';
+const AUTH_DIR = path.join(process.cwd(), 'tokens', 'baileys-auth');
 
-// Configura Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-// ✅ Callback global — persiste entre reconexões
-let globalMessageCallback = null;
-
-// ========== CLOUDINARY AUTH HELPERS ==========
-
-async function loadAuthFromCloudinary() {
-  try {
-    const url = cloudinary.url(`${CLOUDINARY_AUTH_KEY}.json`, {
-      resource_type: 'raw',
-      secure: true,
-      sign_url: false
-    });
-
-    const res = await fetch(url);
-    if (!res.ok) {
-      logger.info('📂 Nenhuma sessão salva no Cloudinary, iniciando nova...');
-      return false;
-    }
-
-    const authData = await res.json();
-    await fs.mkdir(AUTH_FOLDER, { recursive: true });
-
-    for (const [filename, content] of Object.entries(authData)) {
-      const filePath = path.join(AUTH_FOLDER, filename);
-      await fs.writeFile(filePath, JSON.stringify(content));
-    }
-
-    logger.info('✅ Sessão WhatsApp restaurada do Cloudinary!');
-    return true;
-  } catch (err) {
-    logger.warn('⚠️ Não foi possível restaurar sessão do Cloudinary:', err.message);
-    return false;
-  }
+function normalizeJid(jid) {
+  if (!jid) return jid;
+  return jid.replace('@s.whatsapp.net', '@c.us').replace('@g.us', '@g.us');
 }
 
-async function saveAuthToCloudinary() {
-  try {
-    const files = await fs.readdir(AUTH_FOLDER);
-    const authData = {};
+function toBaileysJid(to) {
+  return to.replace('@c.us', '@s.whatsapp.net');
+}
 
-    for (const file of files) {
-      const filePath = path.join(AUTH_FOLDER, file);
-      const content = await fs.readFile(filePath, 'utf-8');
-      try {
-        authData[file] = JSON.parse(content);
-      } catch {
-        authData[file] = content;
-      }
-    }
+function extractMessageText(msg) {
+  const m = msg.message;
+  if (!m) return '';
+  return (
+    m.conversation ||
+    m.extendedTextMessage?.text ||
+    m.listResponseMessage?.singleSelectReply?.selectedRowId ||
+    m.buttonsResponseMessage?.selectedButtonId ||
+    m.templateButtonReplyMessage?.selectedId ||
+    ''
+  );
+}
 
-    const jsonBuffer = Buffer.from(JSON.stringify(authData));
+function convertMessage(msg, sock) {
+  const from = normalizeJid(msg.key.remoteJid);
+  const body = extractMessageText(msg);
+  const isGroupMsg = msg.key.remoteJid?.endsWith('@g.us') || false;
+  const fromMe = msg.key.fromMe || false;
 
-    await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          public_id: CLOUDINARY_AUTH_KEY,
-          resource_type: 'raw',
-          overwrite: true,
-          format: 'json'
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+  let type = 'chat';
+  if (msg.message?.listResponseMessage) type = 'list_response';
+  else if (msg.message?.imageMessage) type = 'image';
+  else if (msg.message?.buttonsResponseMessage) type = 'buttons_response';
+
+  const listResponse = msg.message?.listResponseMessage
+    ? {
+        singleSelectReply: {
+          selectedRowId: msg.message.listResponseMessage.singleSelectReply?.selectedRowId || body
         }
-      );
-      uploadStream.end(jsonBuffer);
-    });
+      }
+    : null;
 
-    logger.info('☁️ Sessão WhatsApp salva no Cloudinary!');
-  } catch (err) {
-    logger.warn('⚠️ Erro ao salvar sessão no Cloudinary:', err.message);
-  }
+  return {
+    from,
+    chatId: from,
+    body,
+    type,
+    isGroupMsg,
+    fromMe,
+    listResponse,
+    _baileysMsg: msg,
+    _sock: sock
+  };
 }
-
-// ========== CLIENTE BAILEYS ==========
 
 export async function createBaileysClient(onQR) {
-  // Restaura sessão do Cloudinary antes de conectar
-  await loadAuthFromCloudinary();
-
-  await fs.mkdir(AUTH_FOLDER, { recursive: true });
-
-  const { state, saveCreds } = await useMultiFileAuthState(AUTH_FOLDER);
+  const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
   const { version } = await fetchLatestBaileysVersion();
 
-  const sock = makeWASocket({
-    version,
-    auth: state,
-    printQRInTerminal: false,
-    logger: {
-      level: 'silent',
-      trace: () => {}, debug: () => {}, info: () => {},
-      warn: () => {}, error: () => {}, fatal: () => {},
-      child: () => ({
-        level: 'silent', trace: () => {}, debug: () => {},
-        info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}
-      })
-    }
-  });
+  let sock;
+  let messageCallback = null;
+  let reconnecting = false;
 
-  let isConnected = false;
+  function createSocket() {
+    sock = makeWASocket({
+      version,
+      auth: state,
+      printQRInTerminal: false,
+      logger: {
+        level: 'silent',
+        info: () => {}, debug: () => {}, warn: () => {}, error: () => {}, trace: () => {},
+        child: () => ({ level: 'silent', info: () => {}, debug: () => {}, warn: () => {}, error: () => {}, trace: () => {} })
+      },
+      browser: ['Bot Norlei Salgados', 'Chrome', '20.0'],
+      syncFullHistory: false,
+      markOnlineOnConnect: true,
+      connectTimeoutMs: 60000,
+      retryRequestDelayMs: 250
+    });
 
-  sock.ev.on('creds.update', async () => {
-    await saveCreds();
-    // Salva no Cloudinary sempre que as credenciais atualizam
-    await saveAuthToCloudinary();
-  });
+    sock.ev.on('creds.update', saveCreds);
 
-  sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect, qr } = update;
-
-    if (qr && onQR) onQR(qr);
-
-    if (connection === 'close') {
-      isConnected = false;
-      const shouldReconnect = (lastDisconnect?.error instanceof Boom)
-        ? lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut
-        : true;
-      const code = lastDisconnect?.error?.output?.statusCode;
-      logger.warn(`⚠️ Conexão fechada. Código: ${code}. Reconectar: ${shouldReconnect}`);
-
-      if (shouldReconnect) {
-        logger.info('🔄 Reconectando em 5 segundos...');
-        setTimeout(() => createBaileysClient(onQR), 5000);
-      } else {
-        // Sessão inválida (logout) — remove sessão do Cloudinary
-        logger.warn('🗑️ Sessão inválida, limpando dados do Cloudinary...');
-        try {
-          await cloudinary.uploader.destroy(`${CLOUDINARY_AUTH_KEY}.json`, { resource_type: 'raw' });
-        } catch {}
-        setTimeout(() => createBaileysClient(onQR), 5000);
+    sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
+      if (qr) {
+        if (typeof onQR === 'function') onQR(qr);
+        logger.info('📸 QR Code gerado! Acesse /qrcode no navegador para escanear.');
       }
-    }
 
-    if (connection === 'open') {
-      isConnected = true;
-      logger.info('✅ WhatsApp conectado com sucesso!');
-      // Salva sessão logo após conectar
-      await saveAuthToCloudinary();
-    }
-  });
-
-  sock.ev.on('messages.upsert', async ({ messages, type }) => {
-    if (type !== 'notify') return;
-    for (const msg of messages) {
-      if (msg.key.fromMe) continue;
-      if (!msg.message) continue;
-
-      try {
-        const from = msg.key.remoteJid;
-        const messageType = Object.keys(msg.message)[0];
-
-        let body = '';
-        let msgType = 'text';
-        let listResponse = null;
-
-        if (messageType === 'conversation') {
-          body = msg.message.conversation;
-        } else if (messageType === 'extendedTextMessage') {
-          body = msg.message.extendedTextMessage?.text || '';
-        } else if (messageType === 'listResponseMessage') {
-          body = msg.message.listResponseMessage?.singleSelectReply?.selectedRowId || '';
-          listResponse = { singleSelectReply: { selectedRowId: body } };
-          msgType = 'list_response';
-        } else {
-          continue;
+      if (connection === 'close') {
+        const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode;
+        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+        logger.warn(`⚠️ Conexão fechada. Código: ${statusCode}. Reconectar: ${shouldReconnect}`);
+        if (shouldReconnect && !reconnecting) {
+          reconnecting = true;
+          logger.info('🔄 Reconectando em 5 segundos...');
+          setTimeout(() => { reconnecting = false; createSocket(); }, 5000);
+        } else if (!shouldReconnect) {
+          logger.error('❌ Sessão encerrada. Delete a pasta tokens/baileys-auth e reinicie.');
         }
-
-        if (!body) continue;
-
-        logger.info(`📨 Mensagem recebida de ${from}: ${body}`);
-
-        const formattedMessage = { from, body, type: msgType, listResponse, raw: msg };
-
-        if (globalMessageCallback) await globalMessageCallback(formattedMessage);
-
-      } catch (error) {
-        logger.error('❌ Erro ao processar mensagem:', error);
       }
-    }
-  });
+
+      if (connection === 'open') {
+        logger.info('✅ WhatsApp conectado com sucesso!');
+      }
+    });
+
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      if (type !== 'notify') return;
+      for (const msg of messages) {
+        if (!msg.message) continue;
+        if (msg.key.fromMe) continue;
+        if (msg.key.remoteJid?.endsWith('@g.us')) continue;
+        const converted = convertMessage(msg, sock);
+        if (!converted.body) continue;
+        if (messageCallback) await messageCallback(converted);
+      }
+    });
+  }
+
+  createSocket();
 
   const client = {
-    onMessage: (callback) => {
-      globalMessageCallback = callback;
+    onMessage(callback) { messageCallback = callback; },
+
+    async sendText(to, text) {
+      try {
+        await sock.sendMessage(toBaileysJid(to), { text });
+      } catch (error) {
+        logger.error('❌ Erro sendText:', error.message);
+        throw error;
+      }
     },
-    sendText: async (to, text) => {
-      await sock.sendMessage(to, { text });
+
+    async sendImage(to, imageUrl, filename, caption) {
+      try {
+        const response = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 15000 });
+        const buffer = Buffer.from(response.data);
+        const mimetype = response.headers['content-type'] || 'image/jpeg';
+        await sock.sendMessage(toBaileysJid(to), { image: buffer, mimetype, caption: caption || '' });
+      } catch (error) {
+        logger.error('❌ Erro sendImage:', error.message);
+        if (caption) await sock.sendMessage(toBaileysJid(to), { text: caption });
+      }
     },
-    sendImage: async (to, imageUrl, caption = '') => {
-      await sock.sendMessage(to, { image: { url: imageUrl }, caption });
+
+    async sendListMessage(to, options) {
+      throw new Error('Usando fallback com números');
     },
-    sendListMessage: async (to, options) => {
-      const { buttonText, description, sections, footer } = options;
-      const waSection = sections.map(s => ({
-        title: s.title || '',
-        rows: s.rows.map(r => ({
-          title: r.title || '',
-          description: r.description || '',
-          rowId: r.rowId || r.id || r.title
-        }))
-      }));
-      await sock.sendMessage(to, {
-        listMessage: {
-          title: description || '',
-          text: description || '',
-          footerText: footer || '',
-          buttonText: buttonText || 'Ver opções',
-          listType: 1,
-          sections: waSection
-        }
-      });
-    },
-    isConnected: () => isConnected,
-    sock
+
+    getSocket() { return sock; }
   };
 
   return client;
