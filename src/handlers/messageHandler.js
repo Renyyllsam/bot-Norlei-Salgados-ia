@@ -1,6 +1,6 @@
 import { generateAIResponse } from '../services/aiService.js';
 import { logger } from '../utils/logger.js';
-import { handleMenuCommand, showMainMenu } from './menuHandler.js';
+import { handleMenuCommand, showMainMenu, isInMenuState } from './menuHandler.js';
 import { handleCheckoutCommand, handleCheckoutFlow } from './checkoutHandler.js';
 import { isInCheckout } from '../services/checkoutService.js';
 import { getCartItems, calculateTotal } from '../services/cartService.js';
@@ -14,18 +14,20 @@ export async function handleIncomingMessage(client, message) {
     logger.info(`📨 Mensagem recebida de ${from}: ${text}`);
     if (!text) return;
 
-    // PRIORIDADE 1: CHECKOUT
+    // PRIORIDADE 1: CHECKOUT EM ANDAMENTO
     if (isInCheckout(from)) {
       await handleCheckoutFlow(client, message);
       return;
     }
 
-    // PRIORIDADE 2: MENU
+    // PRIORIDADE 2: MENU (inclui todos os estados de navegação)
     const menuHandled = await handleMenuCommand(client, message);
     if (menuHandled) return;
 
     // PRIORIDADE 3: INICIAR CHECKOUT
-    if (lower === '4' || lower === 'pedido' || lower === 'fazer pedido' || lower === 'finalizar') {
+    // Inclui '3' (opção "Finalizar Pedido" após adicionar ao carrinho)
+    // e '4' (opção do menu principal)
+    if (lower === '3' || lower === '4' || lower === 'pedido' || lower === 'fazer pedido' || lower === 'finalizar') {
       await handleCheckoutCommand(client, message);
       return;
     }
@@ -45,7 +47,7 @@ export async function handleIncomingMessage(client, message) {
       await client.sendText(from,
         'Desculpe, estou com uma dificuldade técnica. 😔\n\n' +
         '• Digite *menu* para ver as opções\n' +
-        '• Digite *produtos* para ver o cardápio\n' +
+        '• Digite *cardápio* para ver o cardápio\n' +
         '• Ligue: (11) 94383-3418 🥟'
       );
     }
