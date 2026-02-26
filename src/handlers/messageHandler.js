@@ -46,7 +46,6 @@ export async function handleIncomingMessage(client, message) {
     if (!welcomedUsers.has(from)) {
       welcomedUsers.add(from);
       await sendWelcome(client, from);
-      return; // Aguarda o cliente responder
     }
 
     // PRIORIDADE 1: CHECKOUT EM ANDAMENTO
