@@ -5,6 +5,34 @@ import { handleCheckoutCommand, handleCheckoutFlow } from './checkoutHandler.js'
 import { isInCheckout } from '../services/checkoutService.js';
 import { getCartItems, calculateTotal } from '../services/cartService.js';
 
+// Controla quem já recebeu boas-vindas nesta sessão
+const welcomedUsers = new Set();
+
+async function sendWelcome(client, from) {
+  const msg =
+    `🔥════════════════════🔥\n` +
+    `🥟   *NORLEI SALGADOS*   🥟\n` +
+    `🔥════════════════════🔥\n\n` +
+    `Olá! Seja muito bem-vindo(a)! 😊🎉\n\n` +
+    `Sou a *Norlei*, sua atendente virtual!\n` +
+    `Estou aqui para te ajudar a pedir os salgados mais fresquinhos de Guarujá! 🥟❤️\n\n` +
+    `🍽️ *NOSSO CARDÁPIO:*\n` +
+    `🔥 Salgados Fritos — coxinhas, pastéis, bolinhos\n` +
+    `❄️ Salgados Congelados — prontos para fritar em casa\n` +
+    `🥧 Empadas — variadas e no capricho\n` +
+    `📦 Encomendas — festas e eventos especiais\n\n` +
+    `💚 *PIX com 5% de desconto!*\n` +
+    `🚚 Entrega em Guarujá - SP\n\n` +
+    `────────────────────\n` +
+    `👇 Digite uma das opções abaixo:\n` +
+    `• *menu* — ver todas as opções\n` +
+    `• *produtos* — ver o cardápio completo\n` +
+    `• *atendente* — falar com a Norlei\n\n` +
+    `🥟 O que vai querer hoje?`;
+
+  await client.sendText(from, msg);
+}
+
 export async function handleIncomingMessage(client, message) {
   try {
     const from = message.from;
@@ -13,6 +41,13 @@ export async function handleIncomingMessage(client, message) {
 
     logger.info(`📨 Mensagem recebida de ${from}: ${text}`);
     if (!text) return;
+
+    // BOAS-VINDAS AUTOMÁTICAS no primeiro contato da sessão
+    if (!welcomedUsers.has(from)) {
+      welcomedUsers.add(from);
+      await sendWelcome(client, from);
+      return; // Aguarda o cliente responder
+    }
 
     // PRIORIDADE 1: CHECKOUT EM ANDAMENTO
     if (isInCheckout(from)) {
@@ -25,8 +60,6 @@ export async function handleIncomingMessage(client, message) {
     if (menuHandled) return;
 
     // PRIORIDADE 3: INICIAR CHECKOUT
-    // Inclui '3' (opção "Finalizar Pedido" após adicionar ao carrinho)
-    // e '4' (opção do menu principal)
     if (lower === '3' || lower === '4' || lower === 'pedido' || lower === 'fazer pedido' || lower === 'finalizar') {
       await handleCheckoutCommand(client, message);
       return;
