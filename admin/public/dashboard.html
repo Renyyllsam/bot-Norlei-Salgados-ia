@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Norlei Salgados Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>🥟 Norlei Salgados - Admin</h1>
+            <button class="btn btn-secondary" id="logoutBtn">🚪 Sair</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="toolbar">
+            <button class="btn btn-primary" id="newProductBtn">➕ Novo Produto</button>
+            <button class="btn btn-secondary" id="refreshBtn">🔄 Atualizar</button>
+            <div class="stats"><span id="totalProducts">0 produtos</span></div>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+    </div>
+
+    <!-- Modal: Adicionar/Editar Produto -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Novo Produto</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <form id="productForm" enctype="multipart/form-data">
+                <input type="hidden" id="productId" name="productId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productName">Nome do Produto *</label>
+                        <input type="text" id="productName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productPrice">Preço (R$) *</label>
+                        <input type="number" id="productPrice" name="price" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productCategory">Categoria *</label>
+                        <select id="productCategory" name="category" required>
+                            <option value="">Selecione...</option>
+                            <option value="salgados-fritos">Salgados Fritos</option>
+                            <option value="salgados-congelados">Salgados Congelados</option>
+                            <option value="empadas">Empadas</option>
+                            <option value="encomendas">Encomendas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="productStock">Em Estoque</label>
+                        <select id="productStock" name="inStock">
+                            <option value="true">Sim</option>
+                            <option value="false">Não</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Descrição</label>
+                    <textarea id="productDescription" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productSizes">Quantidades (separe por vírgula)</label>
+                        <input type="text" id="productSizes" name="sizes" placeholder="1 unidade, 6 unidades, 12 unidades">
+                    </div>
+                    <div class="form-group">
+                        <label for="productColors">Sabores/Opções (separe por vírgula)</label>
+                        <input type="text" id="productColors" name="colors" placeholder="Frango, Carne, Queijo">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="productImages">Fotos (até 5)</label>
+                    <input type="file" id="productImages" name="images" accept="image/*" multiple>
+                    <small>Formatos aceitos: JPG, PNG, GIF, WEBP (máx 5MB cada)</small>
+                </div>
+                <div id="existingImagesPreview" class="images-preview"></div>
+                <div id="newImagesPreview" class="images-preview"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">💾 Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmar Exclusão -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h2>Confirmar Exclusão</h2>
+                <button class="modal-close" id="closeDeleteModal">&times;</button>
+            </div>
+            <p>Tem certeza que deseja deletar este produto?</p>
+            <p><strong id="deleteProductName"></strong></p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">🗑️ Deletar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Carregando...</p>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

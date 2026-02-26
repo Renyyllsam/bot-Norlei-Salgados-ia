@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Norlei Salgados Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7c59f 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo h1 { color: #ff6b35; font-size: 28px; margin-bottom: 5px; }
+        .logo p  { color: #666; font-size: 14px; }
+        .form-group { margin-bottom: 25px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        input[type="password"] {
+            width: 100%; padding: 12px 15px;
+            border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 16px; transition: all 0.3s;
+        }
+        input[type="password"]:focus {
+            outline: none; border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+        }
+        .btn {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, #ff6b35 0%, #e55a2b 100%);
+            color: white; border: none; border-radius: 8px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255,107,53,0.3); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .error-message {
+            background: #fee; color: #c33; padding: 12px;
+            border-radius: 8px; margin-bottom: 20px; display: none;
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25%      { transform: translateX(-10px); }
+            75%      { transform: translateX(10px); }
+        }
+        .error-message.show { display: block; }
+        .footer { text-align: center; margin-top: 20px; color: #999; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🥟 Norlei Salgados</h1>
+            <p>Painel Administrativo</p>
+        </div>
+        <div class="error-message" id="errorMessage"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="password">Senha de Acesso</label>
+                <input type="password" id="password" name="password" placeholder="Digite sua senha" required autofocus>
+            </div>
+            <button type="submit" class="btn" id="loginBtn">Entrar</button>
+        </form>
+        <div class="footer">© 2026 Norlei Salgados — Guarujá - SP</div>
+    </div>
+    <script>
+        const form = document.getElementById('loginForm');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('errorMessage');
+        const loginBtn = document.getElementById('loginBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = passwordInput.value;
+            if (!password) { showError('Por favor, digite a senha'); return; }
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Entrando...';
+            errorMessage.classList.remove('show');
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await response.json();
+                if (response.ok) { window.location.href = '/dashboard.html'; }
+                else { showError(data.error || 'Senha incorreta'); loginBtn.disabled = false; loginBtn.textContent = 'Entrar'; }
+            } catch (error) { showError('Erro ao conectar com o servidor'); loginBtn.disabled = false; loginBtn.textContent = 'Entrar'; }
+        });
+
+        function showError(message) { errorMessage.textContent = message; errorMessage.classList.add('show'); passwordInput.focus(); }
+
+        (async () => {
+            try {
+                const response = await fetch('/api/check-auth');
+                const data = await response.json();
+                if (data.authenticated) window.location.href = '/dashboard.html';
+            } catch (e) {}
+        })();
+    </script>
+</body>
+</html>
