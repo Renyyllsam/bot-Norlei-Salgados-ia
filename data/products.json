@@ -1,98 +1,159 @@
 {
-    "categories": [
-      { "id": "fritos", "name": "Salgados Fritos", "emoji": "🔥", "description": "Coxinhas, pastéis, bolinhos e mais" },
-      { "id": "congelados", "name": "Salgados Congelados", "emoji": "❄️", "description": "Prontos para fritar em casa" },
-      { "id": "empadas", "name": "Empadas", "emoji": "🥧", "description": "Empadas variadas no capricho" },
-      { "id": "encomendas", "name": "Encomendas", "emoji": "📦", "description": "Festas, eventos e quantidades especiais" }
-    ],
-    "products": [
-      {
-        "id": "FRIT001",
-        "name": "Coxinha de Frango",
-        "category": "fritos",
-        "price": 5.00,
-        "description": "Coxinha crocante recheada com frango desfiado temperado",
-        "sizes": ["1 unidade", "6 unidades", "12 unidades"],
-        "colors": [],
-        "images": [],
-        "inStock": true
-      },
-      {
-        "id": "FRIT002",
-        "name": "Pastel de Carne",
-        "category": "fritos",
-        "price": 6.00,
-        "description": "Pastel crocante recheado com carne moída temperada",
-        "sizes": ["1 unidade", "6 unidades", "12 unidades"],
-        "colors": [],
-        "images": [],
-        "inStock": true
-      },
-      {
-        "id": "FRIT003",
-        "name": "Bolinho de Bacalhau",
-        "category": "fritos",
-        "price": 7.00,
-        "description": "Bolinho tradicional de bacalhau, crocante por fora e macio por dentro",
-        "sizes": ["1 unidade", "6 unidades", "12 unidades"],
-        "colors": [],
-        "images": [],
-        "inStock": true
-      },
-      {
-        "id": "CONG001",
-        "name": "Coxinha Congelada",
-        "category": "congelados",
-        "price": 25.00,
-        "description": "Pacote de coxinhas congeladas prontas para fritar em casa",
-        "sizes": ["Pacote 10 unid.", "Pacote 20 unid.", "Pacote 50 unid."],
-        "colors": [],
-        "images": [],
-        "inStock": true
-      },
-      {
-        "id": "CONG002",
-        "name": "Mix de Salgados Congelados",
-        "category": "congelados",
-        "price": 45.00,
-        "description": "Mix variado com coxinhas, pastéis e bolinhos congelados",
-        "sizes": ["Pacote 20 unid.", "Pacote 50 unid."],
-        "colors": [],
-        "images": [],
-        "inStock": true
-      },
-      {
-        "id": "EMPA001",
-        "name": "Empada de Frango",
-        "category": "empadas",
-        "price": 6.50,
-        "description": "Empada artesanal de frango com requeijão, massa crocante",
-        "sizes": ["1 unidade", "6 unidades", "12 unidades"],
-        "colors": [],
-        "images": [],
-        "inStock": true
-      },
-      {
-        "id": "EMPA002",
-        "name": "Empada de Camarão",
-        "category": "empadas",
-        "price": 8.00,
-        "description": "Empada especial recheada com camarão temperado",
-        "sizes": ["1 unidade", "6 unidades"],
-        "colors": [],
-        "images": [],
-        "inStock": true
-      },
-      {
-        "id": "ENCO001",
-        "name": "Encomenda para Festa (100 unid.)",
-        "category": "encomendas",
-        "price": 180.00,
-        "description": "100 salgados variados para festas e eventos. Peça com 24h de antecedência.",
-        "sizes": ["100 unidades mistas", "100 unidades coxinha", "100 unidades pastel"],
-        "colors": [],
-        "images": [],
-        "inStock": true
-      }
-    ]
-  }
+  "categories": [
+    {
+      "id": "fritos",
+      "name": "Salgados Fritos",
+      "emoji": "🔥",
+      "description": "Coxinhas, pastéis, bolinhos e mais"
+    },
+    {
+      "id": "congelados",
+      "name": "Salgados Congelados",
+      "emoji": "❄️",
+      "description": "Prontos para fritar em casa"
+    },
+    {
+      "id": "empadas",
+      "name": "Empadas",
+      "emoji": "🥧",
+      "description": "Empadas variadas no capricho"
+    },
+    {
+      "id": "encomendas",
+      "name": "Encomendas",
+      "emoji": "📦",
+      "description": "Festas, eventos e quantidades especiais"
+    }
+  ],
+  "products": [
+    {
+      "id": "FRIT001",
+      "name": "Coxinha de Frango",
+      "category": "salgados-fritos",
+      "price": 5,
+      "description": "Coxinha crocante recheada com frango desfiado temperado",
+      "sizes": [
+        "1 unidade",
+        "6 unidades",
+        "12 unidades"
+      ],
+      "colors": [
+        "frango"
+      ],
+      "images": [
+        "https://res.cloudinary.com/drtkkczoy/image/upload/v1772380212/norlei-salgados/ldjd4i5rkarkb0pwenho.png"
+      ],
+      "inStock": true
+    },
+    {
+      "id": "FRIT002",
+      "name": "Pastel de Carne",
+      "category": "salgados-fritos",
+      "price": 6,
+      "description": "Pastel crocante recheado com carne moída temperada",
+      "sizes": [
+        "1 unidade",
+        "6 unidades",
+        "12 unidades"
+      ],
+      "colors": [
+        "carne"
+      ],
+      "images": [
+        "https://res.cloudinary.com/drtkkczoy/image/upload/v1772380478/norlei-salgados/pyul8biqq9nts4rmg1jy.jpg"
+      ],
+      "inStock": true
+    },
+    {
+      "id": "CONG001",
+      "name": "Coxinha Congelada",
+      "category": "salgados-congelados",
+      "price": 25,
+      "description": "Pacote de coxinhas congeladas prontas para fritar em casa",
+      "sizes": [
+        "Pacote 10 unid.",
+        "Pacote 20 unid.",
+        "Pacote 50 unid."
+      ],
+      "colors": [
+        "diversos"
+      ],
+      "images": [
+        "https://res.cloudinary.com/drtkkczoy/image/upload/v1772381017/norlei-salgados/gm694hs0ynwi32eiauf2.jpg"
+      ],
+      "inStock": true
+    },
+    {
+      "id": "CONG002",
+      "name": "Mix de Salgados Congelados",
+      "category": "salgados-congelados",
+      "price": 45,
+      "description": "Mix variado com coxinhas, pastéis e bolinhos congelados",
+      "sizes": [
+        "Pacote 20 unid.",
+        "Pacote 50 unid."
+      ],
+      "colors": [
+        "mix"
+      ],
+      "images": [
+        "https://res.cloudinary.com/drtkkczoy/image/upload/v1772381049/norlei-salgados/vshdkgtfybwngwedk5ev.jpg"
+      ],
+      "inStock": true
+    },
+    {
+      "id": "EMPA001",
+      "name": "Empada de Frango",
+      "category": "empadas",
+      "price": 6.5,
+      "description": "Empada artesanal de frango com requeijão, massa crocante",
+      "sizes": [
+        "1 unidade",
+        "6 unidades",
+        "12 unidades"
+      ],
+      "colors": [
+        "frango"
+      ],
+      "images": [
+        "https://res.cloudinary.com/drtkkczoy/image/upload/v1772381091/norlei-salgados/ev2ocxz3rcz8ooj9cdqg.jpg"
+      ],
+      "inStock": true
+    },
+    {
+      "id": "EMPA002",
+      "name": "Empada de Camarão",
+      "category": "empadas",
+      "price": 8,
+      "description": "Empada especial recheada com camarão temperado",
+      "sizes": [
+        "1 unidade",
+        "6 unidades"
+      ],
+      "colors": [],
+      "images": [
+        "https://res.cloudinary.com/drtkkczoy/image/upload/v1772381107/norlei-salgados/eyuesh3xpr3zjwhhztmg.jpg"
+      ],
+      "inStock": true
+    },
+    {
+      "id": "ENCO001",
+      "name": "Encomenda para Festa (100 unid.)",
+      "category": "encomendas",
+      "price": 180,
+      "description": "100 salgados variados para festas e eventos. Peça com 24h de antecedência.",
+      "sizes": [
+        "100 unidades mistas",
+        "100 unidades coxinha",
+        "100 unidades pastel"
+      ],
+      "colors": [
+        "mix"
+      ],
+      "images": [
+        "https://res.cloudinary.com/drtkkczoy/image/upload/v1772381140/norlei-salgados/ufzpaigvbi4oxas4aixl.jpg"
+      ],
+      "inStock": true
+    }
+  ]
+}
