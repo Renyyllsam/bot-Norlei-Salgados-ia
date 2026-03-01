@@ -54,7 +54,8 @@ COMANDOS QUE O CLIENTE PODE USAR:
 - "menu" — ver o menu principal
 - "produtos" — ver o cardápio
 - "carrinho" — ver itens selecionados
-- "pedido" — finalizar o pedido
+- "pedido" — finalizar o pedido ou cancelar
+
 
 Responda sempre em português brasileiro, de forma simpática e objetiva.`;
 }
