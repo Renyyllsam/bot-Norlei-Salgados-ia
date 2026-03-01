@@ -82,9 +82,9 @@ export async function getProductById(productId) {
   return products.find(p => p.id === productId);
 }
 
+// ✅ SEMPRE usa storeConfig — ignora categorias do Cloudinary que podem ter IDs errados
 export async function getCategories() {
-  const data = await loadProducts();
-  return data.categories || storeConfig.categories;
+  return storeConfig.categories;
 }
 
 export function formatProduct(product, showDetails = false) {
